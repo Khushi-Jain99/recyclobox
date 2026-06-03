@@ -5,7 +5,7 @@ import numpy as np
 
 # Add src to system path to import modules
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from preprocessor import preprocess_frame, apply_clahe
+from preprocessing.preprocessor import preprocess_frame, apply_clahe
 
 class TestPreprocessor(unittest.TestCase):
     def setUp(self):

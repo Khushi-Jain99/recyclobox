@@ -6,66 +6,29 @@ __pycache__/
 # C extensions
 *.so
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nosetests
-.pytest_cache/
-venv/
-.venv/
-ENV/
-env/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
 # Environments
 .env
 .venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# IDEs and editors
+# IDEs
 .vscode/
 .idea/
 
-# Local datasets and models
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
-models/*
-!models/checkpoints/
-!models/.gitkeep
-models/checkpoints/*
-!models/checkpoints/.gitkeep
+# Local datasets and model weights
+data/
+saved_models/*
+!saved_models/.gitkeep
+
+# Training checkpoints
+models/checkpoints/
+checkpoints/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# OS files
+.DS_Store
+Thumbs.db

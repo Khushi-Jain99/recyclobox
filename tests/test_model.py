@@ -5,7 +5,7 @@ import tensorflow as tf
 
 # Add src to system path to import modules
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from model import build_custom_cnn, build_mobilenet_transfer
+from models.model import build_custom_cnn, build_mobilenet_transfer
 
 class TestModel(unittest.TestCase):
     def test_custom_cnn_output_shape(self):
