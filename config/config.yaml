@@ -1,0 +1,31 @@
+# RecycloBox AI Configuration File
+
+dataset:
+  raw_dir: "data"
+  processed_dir: "data/processed"
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  random_seed: 42
+  classes:
+    - plastic
+    - paper
+    - glass
+    - metal
+    - organic
+    - hazardous
+    - non_recyclable
+
+model:
+  input_shape: [224, 224, 3]
+  batch_size: 32
+  epochs: 25
+  learning_rate: 0.001
+  fine_tune_epochs: 15
+  fine_tune_learning_rate: 0.0001
+  weights_path: "models/recyclobox_model.keras"
+  checkpoint_dir: "models/checkpoints"
+
+training:
+  early_stopping_patience: 5
+  reduce_lr_patience: 3
