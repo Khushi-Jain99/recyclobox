@@ -3,7 +3,6 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
-import yaml
 from sklearn.metrics import classification_report, confusion_matrix
 
 # Add parent directory of training folder to python path
@@ -11,10 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from preprocessing.data_loader import load_datasets
 from models.model import build_mobilenet_transfer
-
-def load_config(config_path="config/config.yaml"):
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from utils.config_helper import load_config
 
 def plot_history(history, fine_tune_history=None, save_path="saved_models/training_curves.png"):
     acc = history.history['accuracy']

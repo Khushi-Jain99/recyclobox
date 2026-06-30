@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RecycloBox AI - Intelligent Waste Segregation System</title>
+    <!-- Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet served from /static/css -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="glass-bg-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-recycle logo-icon"></i>
+                <div class="logo-text">
+                    <h1>RecycloBox <span>AI</span></h1>
+                    <p>Automated Waste Classification & Segregation</p>
+                </div>
+            </div>
+            <div class="header-status-panel">
+                <div class="status-badge" id="backend-status">
+                    <span class="status-dot green"></span>
+                    <span class="status-text">Server: Connecting...</span>
+                </div>
+                <div class="status-badge" id="model-status">
+                    <span class="status-dot amber"></span>
+                    <span class="status-text">Model: Loading...</span>
+                </div>
+                <div class="mode-toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="mock-mode-toggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="mode-label">Force Simulator Mode</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Panel: Waste Input Area -->
+            <section class="dashboard-card input-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-camera-retro"></i> Input Center</h2>
+                    <p>Provide a waste item at the top plate of the dustbin</p>
+                </div>
+                
+                <div class="input-tabs">
+                    <button class="tab-btn active" id="tab-upload-btn" onclick="switchTab('upload')">
+                        <i class="fa-solid fa-file-arrow-up"></i> Image Upload
+                    </button>
+                    <button class="tab-btn" id="tab-webcam-btn" onclick="switchTab('webcam')">
+                        <i class="fa-solid fa-video"></i> Live Webcam
+                    </button>
+                </div>
+
+                <div class="tab-content" id="upload-tab">
+                    <div class="drag-drop-zone" id="drag-drop-area">
+                        <input type="file" id="file-input" accept="image/*" style="display: none;">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <h3>Drag & Drop Image Here</h3>
+                        <p>or click to browse local files</p>
+                        <span class="file-spec">Supports JPG, PNG, WEBP (Max 5MB)</span>
+                    </div>
+                    <div class="preview-area hidden" id="image-preview-container">
+                        <img src="" id="image-preview" alt="Waste preview">
+                        <button class="btn btn-danger remove-preview-btn" onclick="resetUpload()">
+                            <i class="fa-solid fa-trash-can"></i> Remove Image
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content hidden" id="webcam-tab">
+                    <div class="webcam-container">
+                        <video id="webcam" autoplay playsinline muted class="webcam-feed"></video>
+                        <div class="webcam-overlay" id="webcam-overlay">
+                            <i class="fa-solid fa-camera"></i>
+                            <p>Camera is stopped</p>
+                        </div>
+                        <canvas id="capture-canvas" style="display: none;"></canvas>
+                    </div>
+                    <div class="webcam-controls">
+                        <button class="btn btn-secondary" id="start-webcam-btn">
+                            <i class="fa-solid fa-power-off"></i> Start Feed
+                        </button>
+                        <button class="btn btn-primary hidden" id="capture-btn">
+                            <i class="fa-solid fa-circle-dot"></i> Analyze Waste
+                        </button>
+                    </div>
+                </div>
+
+                <div class="action-bar" id="upload-action-bar">
+                    <button class="btn btn-primary w-100" id="analyze-btn" disabled>
+                        <i class="fa-solid fa-brain"></i> Run Classification
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Panel: Analytics & Results -->
+            <section class="dashboard-card results-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-chart-simple"></i> Intelligence Report</h2>
+                    <p>Real-time deep learning classification summary</p>
+                </div>
+
+                <div class="prediction-hero empty" id="prediction-hero-box">
+                    <div class="hero-icon-container">
+                        <i class="fa-solid fa-circle-question hero-icon" id="hero-class-icon"></i>
+                    </div>
+                    <div class="hero-details">
+                        <span class="prediction-label">DETECTED CATEGORY</span>
+                        <h3 class="prediction-class" id="hero-class-name">No Object Detected</h3>
+                        <div class="confidence-gauge">
+                            <div class="gauge-track">
+                                <div class="gauge-bar" id="hero-confidence-bar" style="width: 0%;"></div>
+                            </div>
+                            <span class="confidence-val" id="hero-confidence-val">0% Confidence</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="class-distribution">
+                    <h3>Classification Probability Distribution</h3>
+                    <div class="distribution-list" id="distribution-list">
+                        <!-- Progress bars generated dynamically by JS -->
+                        <div class="dist-row" data-class="plastic">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-bottle-water"></i> Plastic</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="paper">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-scroll"></i> Paper</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="glass">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-wine-glass"></i> Glass</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="metal">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-cubes"></i> Metal</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="organic">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-seedling"></i> Organic</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="hazardous">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-triangle-exclamation"></i> Hazardous</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                        <div class="dist-row" data-class="non_recyclable">
+                            <div class="dist-info">
+                                <span class="dist-class"><i class="fa-solid fa-trash"></i> Non-Recyclable</span>
+                                <span class="dist-value">0%</span>
+                            </div>
+                            <div class="dist-bar-bg"><div class="dist-bar" style="width: 0%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Dustbin Simulator Section -->
+        <section class="dashboard-card dustbin-simulator-card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-dumpster"></i> Smart RecycloBox Simulator (Hardware Actuation)</h2>
+                <p>Digital twin of the physical 7-compartment sorting lid mechanism</p>
+            </div>
+            
+            <div class="simulator-layout">
+                <div class="simulator-graphic">
+                    <div class="plate-base">
+                        <div class="compartments-circle">
+                            <!-- Circular sections of the dustbin -->
+                            <div class="compartment-sector plastic" id="sector-plastic">
+                                <span class="sector-tag">Plastic (0°)</span>
+                            </div>
+                            <div class="compartment-sector paper" id="sector-paper">
+                                <span class="sector-tag">Paper (51°)</span>
+                            </div>
+                            <div class="compartment-sector glass" id="sector-glass">
+                                <span class="sector-tag">Glass (103°)</span>
+                            </div>
+                            <div class="compartment-sector metal" id="sector-metal">
+                                <span class="sector-tag">Metal (154°)</span>
+                            </div>
+                            <div class="compartment-sector organic" id="sector-organic">
+                                <span class="sector-tag">Organic (206°)</span>
+                            </div>
+                            <div class="compartment-sector hazardous" id="sector-hazardous">
+                                <span class="sector-tag">Hazardous (257°)</span>
+                            </div>
+                            <div class="compartment-sector non_recyclable" id="sector-non_recyclable">
+                                <span class="sector-tag">Trash (309°)</span>
+                            </div>
+                        </div>
+                        <!-- Center rotating plate/funnel with drop indicator -->
+                        <div class="rotating-funnel" id="physical-funnel">
+                            <div class="arrow-indicator"></div>
+                            <div class="center-cap">
+                                <i class="fa-solid fa-microchip"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="simulator-details">
+                    <div class="stat-grid">
+                        <div class="stat-box">
+                            <span class="stat-label">Active Compartment</span>
+                            <span class="stat-value" id="sim-active-compartment">None</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Servo Rotation Angle</span>
+                            <span class="stat-value" id="sim-servo-angle">0°</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">Funnel Action</span>
+                            <span class="stat-value" id="sim-funnel-action">Stationary</span>
+                        </div>
+                    </div>
+
+                    <div class="actuation-log">
+                        <h4>Hardware Action Log</h4>
+                        <div class="log-output" id="actuation-log-text">
+                            [SYSTEM] Simulator online. Awaiting waste placement...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Developer and API console -->
+        <section class="dashboard-card console-card">
+            <div class="card-header">
+                <h2><i class="fa-solid fa-code"></i> IoT Integration Center & API Console</h2>
+                <p>Monitor HTTP payloads and configure physical smart dustbins</p>
+            </div>
+            
+            <div class="console-grid">
+                <!-- Raw response logs -->
+                <div class="console-box response-logger">
+                    <h3>Raw API Response (POST /predict)</h3>
+                    <pre class="json-code" id="api-raw-response">{}</pre>
+                </div>
+
+                <!-- IoT sample script templates -->
+                <div class="console-box iot-docs">
+                    <div class="docs-tabs">
+                        <button class="doc-tab active" id="doc-tab-python" onclick="switchDocTab('python')">ESP32 (Python)</button>
+                        <button class="doc-tab" id="doc-tab-arduino" onclick="switchDocTab('arduino')">ESP32 (Arduino C++)</button>
+                        <button class="doc-tab" id="doc-tab-pi" onclick="switchDocTab('pi')">Raspberry Pi (Python)</button>
+                    </div>
+                    
+                    <div class="doc-content" id="doc-python">
+                        <pre><code>import network, urequests
+import machine
+
+# Setup servo motor
+pin = machine.Pin(13)
+servo = machine.PWM(pin, freq=50)
+
+# Connect to Wi-Fi
+wifi = network.WLAN(network.STA_IF)
+wifi.active(True)
+wifi.connect('WiFi_Name', 'Password')
+
+# Capture & send image
+url = "http://&lt;server-ip&gt;:8000/predict"
+files = {'file': open('captured.jpg', 'rb')}
+res = urequests.post(url, files=files).json()
+
+# Move servo according to category
+target = res['class']
+angles = {
+    'plastic': 0, 'paper': 51, 'glass': 103,
+    'metal': 154, 'organic': 206, 'hazardous': 257,
+    'non_recyclable': 309
+}
+
+if target in angles:
+    # Rotate servo (Duty calculations)
+    duty = int(26 + (angles[target] / 180.0) * 102)
+    servo.duty(duty)</code></pre>
+                    </div>
+
+                    <div class="doc-content hidden" id="doc-arduino">
+                        <pre><code>#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+#include &lt;ESP32Servo.h&gt;
+
+Servo sortingServo;
+const char* ssid = "WiFi_Name";
+const char* password = "Password";
+const char* serverUrl = "http://&lt;server-ip&gt;:8000/predict";
+
+void setup() {
+  sortingServo.attach(13);
+  WiFi.begin(ssid, password);
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED && captureTriggered()) {
+    HTTPClient http;
+    http.begin(serverUrl);
+    // Send captured frame bytes as multipart form
+    int httpResponseCode = http.POST(imageBytes, imageSize);
+    if (httpResponseCode == 200) {
+      String response = http.getString();
+      // Parse JSON response for "class"
+      String category = parseJsonClass(response);
+      int angle = getAngleForClass(category);
+      sortingServo.write(angle); // Rotate Funnel
+    }
+    http.end();
+  }
+}</code></pre>
+                    </div>
+
+                    <div class="doc-content hidden" id="doc-pi">
+                        <pre><code>import requests
+import gpiozero
+from time import sleep
+
+# GPIO Servo control
+servo = gpiozero.AngularServo(13, min_angle=0, max_angle=180)
+
+# Raspberry Pi Camera Capture
+# (Run camera command, save file to '/tmp/frame.jpg')
+
+url = "http://localhost:8000/predict"
+with open("/tmp/frame.jpg", "rb") as img:
+    response = requests.post(url, files={"file": img})
+    
+data = response.json()
+waste_class = data["class"]
+
+# Angle mapping
+angles = {
+    'plastic': 0, 'paper': 30, 'glass': 60,
+    'metal': 95, 'organic': 120, 'hazardous': 150,
+    'non_recyclable': 180
+}
+
+if waste_class in angles:
+    print(f"Directing {waste_class} to compartment at {angles[waste_class]}°")
+    servo.angle = angles[waste_class]</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- App Logic Script served from /static/js -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

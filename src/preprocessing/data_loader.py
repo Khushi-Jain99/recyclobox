@@ -1,10 +1,6 @@
 import os
 import tensorflow as tf
-import yaml
-
-def load_config(config_path="config/config.yaml"):
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+from utils.config_helper import load_config
 
 def get_data_augmentation_pipeline():
     """

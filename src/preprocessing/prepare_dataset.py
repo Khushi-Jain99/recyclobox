@@ -1,11 +1,12 @@
 import os
+import sys
 import shutil
 import random
-import yaml
 
-def load_config(config_path="config/config.yaml"):
-    with open(config_path, "r") as f:
-        return yaml.safe_load(f)
+# Add parent directory of preprocessing folder to python path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
+from utils.config_helper import load_config
 
 CLASS_MAPPINGS = {
     'hazardous': [
