@@ -18,13 +18,9 @@ ENV/
 .idea/
 
 # Local datasets and model weights
-data/
-saved_models/*
-!saved_models/.gitkeep
-
-# Training checkpoints
-models/checkpoints/
-checkpoints/
+backend/data/
+backend/saved_models/*
+!backend/saved_models/.gitkeep
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints

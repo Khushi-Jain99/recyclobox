@@ -1,6 +1,6 @@
 import yaml
 
-def load_config(config_path="config/config.yaml"):
+def load_config(config_path="backend/config/config.yaml"):
     """
     Loads project YAML config file.
     """

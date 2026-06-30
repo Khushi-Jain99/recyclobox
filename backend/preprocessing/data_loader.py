@@ -15,7 +15,7 @@ def get_data_augmentation_pipeline():
     ])
     return data_augmentation
 
-def load_datasets(config_path="config/config.yaml"):
+def load_datasets(config_path="backend/config/config.yaml"):
     """
     Loads train, validation, and test datasets from the processed directory.
     """

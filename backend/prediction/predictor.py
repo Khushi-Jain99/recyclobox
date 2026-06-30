@@ -11,7 +11,7 @@ from preprocessing.preprocessor import load_and_preprocess_image, preprocess_fra
 from utils.config_helper import load_config
 
 class WasteClassifier:
-    def __init__(self, config_path="config/config.yaml"):
+    def __init__(self, config_path="backend/config/config.yaml"):
         self.config = load_config(config_path)
         if not self.config:
             raise ValueError(f"Could not load configuration from {config_path}")

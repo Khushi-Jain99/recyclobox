@@ -3,9 +3,9 @@ import sys
 import unittest
 import numpy as np
 
-# Add src to system path to import modules
-sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src"))
-from preprocessing.preprocessor import preprocess_frame, apply_clahe
+# Add project root to system path to import modules
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from backend.preprocessing.preprocessor import preprocess_frame, apply_clahe
 
 class TestPreprocessor(unittest.TestCase):
     def setUp(self):
@@ -17,6 +17,7 @@ class TestPreprocessor(unittest.TestCase):
         processed = preprocess_frame(self.dummy_frame, target_size=target_size)
         
         # Verify shape
+        self.assertIsNotNone(processed)
         self.assertEqual(processed.shape, (224, 224, 3))
         
         # Verify values are normalized to [0, 1]

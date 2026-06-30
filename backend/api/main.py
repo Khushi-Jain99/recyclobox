@@ -39,7 +39,7 @@ def load_model():
     global classifier
     # Expect config/config.yaml at the root workspace directory
     # If starting api from the root, paths should align.
-    classifier = WasteClassifier(config_path="config/config.yaml")
+    classifier = WasteClassifier(config_path="backend/config/config.yaml")
 
 # Serve the UI static files at /static
 # Make sure frontend static folder exists

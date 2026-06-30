@@ -1,8 +1,8 @@
 # RecycloBox AI Configuration File
 
 dataset:
-  raw_dir: "data"
-  processed_dir: "data/processed"
+  raw_dir: "backend/data"
+  processed_dir: "backend/data/processed"
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
@@ -23,8 +23,8 @@ model:
   learning_rate: 0.001
   fine_tune_epochs: 15
   fine_tune_learning_rate: 0.0001
-  weights_path: "saved_models/recyclobox_model.keras"
-  checkpoint_dir: "saved_models/checkpoints"
+  weights_path: "backend/saved_models/recyclobox_model.keras"
+  checkpoint_dir: "backend/saved_models/checkpoints"
 
 training:
   early_stopping_patience: 5
