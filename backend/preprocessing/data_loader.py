@@ -1,6 +1,15 @@
 import os
+import sys
 import tensorflow as tf
+
+# Add parent directory of preprocessing folder to python path
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 from utils.config_helper import load_config
+
+# Determine the directory of this file and resolve the project root
+DATA_LOADER_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(DATA_LOADER_DIR, "..", ".."))
 
 def get_data_augmentation_pipeline():
     """
@@ -19,9 +28,24 @@ def load_datasets(config_path="backend/config/config.yaml"):
     """
     Loads train, validation, and test datasets from the processed directory.
     """
-    config = load_config(config_path)
+    # Resolve relative config path to absolute using the project root
+    if not os.path.isabs(config_path):
+        resolved_config_path = os.path.abspath(os.path.join(PROJECT_ROOT, config_path))
+    else:
+        resolved_config_path = config_path
+
+    config = load_config(resolved_config_path)
+    if config is None:
+        raise FileNotFoundError(
+            f"Configuration file could not be loaded from: {resolved_config_path}. "
+            "Please ensure the path is correct and the config.yaml file exists."
+        )
     
     processed_dir = config['dataset']['processed_dir']
+    # Resolve relative processed directory to absolute using the project root
+    if not os.path.isabs(processed_dir):
+        processed_dir = os.path.abspath(os.path.join(PROJECT_ROOT, processed_dir))
+
     img_height = config['model']['input_shape'][0]
     img_width = config['model']['input_shape'][1]
     batch_size = config['model']['batch_size']
@@ -30,6 +54,14 @@ def load_datasets(config_path="backend/config/config.yaml"):
     train_dir = os.path.join(processed_dir, 'train')
     val_dir = os.path.join(processed_dir, 'val')
     test_dir = os.path.join(processed_dir, 'test')
+
+    # Validate directory existence
+    for name, directory in [("Train", train_dir), ("Validation", val_dir), ("Test", test_dir)]:
+        if not os.path.exists(directory):
+            raise FileNotFoundError(
+                f"{name} directory not found at: {directory}. "
+                "Please run the dataset preparation script first to prepare the dataset."
+            )
     
     train_ds = tf.keras.utils.image_dataset_from_directory(
         train_dir,
@@ -89,3 +121,4 @@ def load_datasets(config_path="backend/config/config.yaml"):
     test_ds = test_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
     
     return train_ds, val_ds, test_ds, class_names
+

@@ -10,15 +10,27 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from preprocessing.preprocessor import load_and_preprocess_image, preprocess_frame
 from utils.config_helper import load_config
 
+PREDICTOR_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(PREDICTOR_DIR, "..", ".."))
+DEFAULT_CONFIG_PATH = os.path.join(PROJECT_ROOT, "backend", "config", "config.yaml")
+
 class WasteClassifier:
-    def __init__(self, config_path="backend/config/config.yaml"):
+    def __init__(self, config_path=None):
+        if config_path is None:
+            config_path = DEFAULT_CONFIG_PATH
+            
         self.config = load_config(config_path)
         if not self.config:
             raise ValueError(f"Could not load configuration from {config_path}")
             
         self.classes = self.config['dataset']['classes']
         self.input_shape = tuple(self.config['model']['input_shape'][:2])
-        self.weights_path = self.config['model']['weights_path']
+        
+        weights_path = self.config['model']['weights_path']
+        if not os.path.isabs(weights_path):
+            self.weights_path = os.path.abspath(os.path.join(PROJECT_ROOT, weights_path))
+        else:
+            self.weights_path = weights_path
         
         if os.path.exists(self.weights_path):
             print(f"Loading trained weights from {self.weights_path}...")

@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 import cv2
 import random
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -14,12 +15,27 @@ import uvicorn
 # Add parent directory of api folder to python path
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
+API_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(API_DIR, "..", ".."))
+
 from prediction.predictor import WasteClassifier, get_mock_prediction
+
+# Global classifier instance
+classifier = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global classifier
+    # Resolve config path relative to project root
+    config_path = os.path.join(PROJECT_ROOT, "backend", "config", "config.yaml")
+    classifier = WasteClassifier(config_path=config_path)
+    yield
 
 app = FastAPI(
     title="RecycloBox AI API",
     description="Microservice for real-time deep learning waste image segregation and classification.",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 # Enable CORS for frontend integration
@@ -31,24 +47,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Global classifier instance
-classifier = None
-
-@app.on_event("startup")
-def load_model():
-    global classifier
-    # Expect config/config.yaml at the root workspace directory
-    # If starting api from the root, paths should align.
-    classifier = WasteClassifier(config_path="backend/config/config.yaml")
-
 # Serve the UI static files at /static
 # Make sure frontend static folder exists
-os.makedirs("frontend/static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+static_dir = os.path.join(PROJECT_ROOT, "frontend", "static")
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
-    index_path = "frontend/index.html"
+    index_path = os.path.join(PROJECT_ROOT, "frontend", "index.html")
     if os.path.exists(index_path):
         with open(index_path, "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
@@ -123,5 +130,7 @@ async def predict_waste(file: UploadFile = File(...), mock: bool = Query(False))
         return get_mock_prediction(file.filename, classes=classes)
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Use app_dir to prevent reload ModuleNotFoundError when running from other directories
+    api_dir = os.path.dirname(os.path.abspath(__file__))
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True, app_dir=api_dir)
 

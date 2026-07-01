@@ -19,9 +19,9 @@ dataset:
 model:
   input_shape: [224, 224, 3]
   batch_size: 32
-  epochs: 25
+  epochs: 5
   learning_rate: 0.001
-  fine_tune_epochs: 15
+  fine_tune_epochs: 3
   fine_tune_learning_rate: 0.0001
   weights_path: "backend/saved_models/recyclobox_model.keras"
   checkpoint_dir: "backend/saved_models/checkpoints"

@@ -12,19 +12,23 @@ from preprocessing.data_loader import load_datasets
 from models.model import build_mobilenet_transfer
 from utils.config_helper import load_config
 
+# Resolve paths relative to the project root
+TRAIN_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(TRAIN_DIR, "..", ".."))
+
 def plot_history(history, fine_tune_history=None, save_path="saved_models/training_curves.png"):
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    acc = list(history.history['accuracy'])
+    val_acc = list(history.history['val_accuracy'])
+    loss = list(history.history['loss'])
+    val_loss = list(history.history['val_loss'])
+    
+    initial_epochs = len(acc)
     
     if fine_tune_history:
         acc += fine_tune_history.history['accuracy']
         val_acc += fine_tune_history.history['val_accuracy']
         loss += fine_tune_history.history['loss']
         val_loss += fine_tune_history.history['val_loss']
-        
-    initial_epochs = len(history.history['accuracy'])
     
     plt.figure(figsize=(12, 6))
     
@@ -70,20 +74,29 @@ def main():
     else:
         print("No GPU found. Running on CPU.")
         
-    config = load_config()
+    config_path = os.path.join(PROJECT_ROOT, "backend", "config", "config.yaml")
+    config = load_config(config_path)
+    if config is None:
+        raise FileNotFoundError(f"Could not load config file from {config_path}")
     
     input_shape = tuple(config['model']['input_shape'])
     num_classes = len(config['dataset']['classes'])
     epochs = config['model']['epochs']
     lr = config['model']['learning_rate']
+    
     weights_path = config['model']['weights_path']
+    if not os.path.isabs(weights_path):
+        weights_path = os.path.abspath(os.path.join(PROJECT_ROOT, weights_path))
+        
     checkpoint_dir = config['model']['checkpoint_dir']
+    if not os.path.isabs(checkpoint_dir):
+        checkpoint_dir = os.path.abspath(os.path.join(PROJECT_ROOT, checkpoint_dir))
     
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(os.path.dirname(weights_path), exist_ok=True)
     
     print("\n--- Phase 1: Loading Datasets ---")
-    train_ds, val_ds, test_ds, class_names = load_datasets()
+    train_ds, val_ds, test_ds, class_names = load_datasets(config_path)
     
     print("\n--- Phase 2: Building and Compiling Feature Extractor ---")
     model = build_mobilenet_transfer(input_shape=input_shape, num_classes=num_classes)
@@ -95,7 +108,7 @@ def main():
     )
     
     # Configure Callbacks
-    checkpoint_path = os.path.join(checkpoint_dir, "cp_warmup.ckpt")
+    checkpoint_path = os.path.join(checkpoint_dir, "cp_warmup.weights.h5")
     cp_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_path,
         save_weights_only=True,
@@ -132,8 +145,6 @@ def main():
     
     if fine_tune_epochs > 0:
         print("\n--- Phase 4: Fine-Tuning Top MobileNetV2 Layers ---")
-        model.load_weights(checkpoint_path)
-        
         model = build_mobilenet_transfer(input_shape=input_shape, num_classes=num_classes, trainable_base_layers=20)
         model.load_weights(checkpoint_path)
         
@@ -144,7 +155,7 @@ def main():
             metrics=['accuracy']
         )
         
-        checkpoint_path_ft = os.path.join(checkpoint_dir, "cp_finetune.ckpt")
+        checkpoint_path_ft = os.path.join(checkpoint_dir, "cp_finetune.weights.h5")
         cp_callback_ft = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_path_ft,
             save_weights_only=True,
@@ -165,7 +176,8 @@ def main():
     model.save(weights_path)
     print(f"Saved final trained model to {weights_path}")
     
-    plot_history(history, fine_tune_history)
+    save_plot_path = os.path.join(PROJECT_ROOT, "backend", "saved_models", "training_curves.png")
+    plot_history(history, fine_tune_history, save_path=save_plot_path)
     
     print("\n--- Phase 5: Evaluating Model on Test Dataset ---")
     test_loss, test_acc = model.evaluate(test_ds, verbose=1)
