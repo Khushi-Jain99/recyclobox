@@ -25,6 +25,9 @@ backend/saved_models/*
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
 
+# Testing cache
+.pytest_cache/
+
 # OS files
 .DS_Store
 Thumbs.db

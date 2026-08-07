@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 import uvicorn
 
 # Add parent directory of api folder to python path
@@ -73,6 +73,10 @@ def read_root():
             status_code=200
         )
 
+@app.get("/favicon.ico", include_in_schema=False)
+def get_favicon():
+    return Response(status_code=204)
+
 @app.get("/health")
 def health_check():
     if classifier is not None and classifier.model is not None:
@@ -95,10 +99,9 @@ async def predict_waste(file: UploadFile = File(...), mock: bool = Query(False))
         raise HTTPException(status_code=400, detail="Uploaded file must be an image.")
         
     # Check if we should fall back to mock predictions
-    model_loaded = classifier is not None and classifier.model is not None
-    classes = classifier.classes if classifier else None
-    if mock or not model_loaded:
-        return get_mock_prediction(file.filename, classes=classes)
+    if mock or classifier is None or classifier.model is None:
+        classes = classifier.classes if classifier is not None else None
+        return get_mock_prediction(filename, classes=classes)
         
     try:
         # Read file bytes
@@ -119,7 +122,7 @@ async def predict_waste(file: UploadFile = File(...), mock: bool = Query(False))
         if "error" in result:
             # If real inference fails, fall back to mock prediction
             print(f"ML Inference error: {result['error']}. Falling back to mock prediction.")
-            return get_mock_prediction(file.filename, classes=classes)
+            return get_mock_prediction(filename, classes=classifier.classes)
             
         result["is_mock"] = False
         return result
@@ -127,7 +130,7 @@ async def predict_waste(file: UploadFile = File(...), mock: bool = Query(False))
     except Exception as e:
         # Fall back to mock prediction on other errors
         print(f"Process error: {str(e)}. Falling back to mock prediction.")
-        return get_mock_prediction(file.filename, classes=classes)
+        return get_mock_prediction(filename, classes=classifier.classes if classifier else None)
 
 if __name__ == "__main__":
     # Use app_dir to prevent reload ModuleNotFoundError when running from other directories
